@@ -3,6 +3,7 @@ import { ReactiveVar } from 'meteor/reactive-var';
 import i18next from 'i18next';
 import sprintf from 'i18next-sprintf-postprocessor';
 import languages from './languages';
+import fs from 'fs';
 
 const DEFAULT_NAMESPACE = 'translation';
 const DEFAULT_LANGUAGE = 'en';
@@ -45,7 +46,12 @@ export const TAPi18n = {
   },
   async loadLanguage(language) {
     if (language in languages && 'load' in languages[language]) {
-      const data = await languages[language].load();
+      let data = await languages[language].load();
+      const custom_data_path = `./custom_data/${language}.i18n.json`;
+      if (fs.existsSync(custom_data_path)) {
+        const custom_data = await import(custom_data_path);
+        data = {...data, ...custom_data};
+      }
       this.i18n.addResourceBundle(language, DEFAULT_NAMESPACE, data);
     } else {
       throw new Error(`Language ${language} is not supported`);
